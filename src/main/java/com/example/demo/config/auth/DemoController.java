@@ -11,6 +11,6 @@ public class DemoController {
 
     @GetMapping("/security-test")
     public ResponseEntity<String> securityTest() {
-        return ResponseEntity.ok("Response from secure endpoint...");
+        return ResponseEntity.ok("Response from secure endpoint..");
     }
 }
