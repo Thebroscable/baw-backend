@@ -34,8 +34,8 @@ public class AuthenticationService {
                 .password(passwordEncoder.encode(registerRequest.getPassword()))
                 .build();
 
-        userAccountRepository.save(userAccount);
         String jwtToken = jwtService.generateToken(userAccount);
+        userAccountRepository.save(userAccount);
 
         return AuthenticationResponse.builder()
                 .token(jwtToken)
