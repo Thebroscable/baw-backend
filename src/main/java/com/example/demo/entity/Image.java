@@ -29,7 +29,7 @@ public class Image {
 
     @NotNull
     @Size(max = 255)
-    private String file_name;
+    private String image_path;
 
     @NotNull
     private Long user_id;
