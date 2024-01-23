@@ -4,11 +4,18 @@ import com.example.demo.dto.ImageRequest;
 import com.example.demo.service.ImageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @RestController
 @RequiredArgsConstructor
@@ -16,6 +23,18 @@ import java.io.IOException;
 public class ImageController {
 
     private final ImageService imageService;
+
+    @GetMapping("/storage/{name}")
+    public ResponseEntity<Resource> readImage(@PathVariable("name") String name) throws IOException {
+        Resource resource = imageService.getImagePath(name);
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("image-name", name);
+        httpHeaders.add(HttpHeaders.CONTENT_DISPOSITION, "attachment;image-name="+resource.getFilename());
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(Files.probeContentType(resource.getFile().toPath())))
+                .headers(httpHeaders)
+                .body(resource);
+    }
 
     @PostMapping("/create")
     public ResponseEntity<Void> createImage(@RequestParam(value = "title") String title,

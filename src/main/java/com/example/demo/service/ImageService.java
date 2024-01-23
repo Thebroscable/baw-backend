@@ -8,18 +8,17 @@ import com.example.demo.repository.ImageRepository;
 import com.example.demo.repository.UserAccountRepository;
 import io.jsonwebtoken.lang.Assert;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ResourceUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.net.MalformedURLException;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.Objects;
@@ -29,7 +28,6 @@ import static java.nio.file.Files.copy;
 import static java.nio.file.Paths.get;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-import static org.springframework.http.HttpHeaders.CONTENT_DISPOSITION;
 
 @Service
 @RequiredArgsConstructor
@@ -37,7 +35,7 @@ public class ImageService {
 
     private final ImageRepository imageRepository;
     private final UserAccountRepository userAccountRepository;
-    public static final String DIRECTORY = System.getProperty("user.home") + "/prod/baw-backend/uploads/";
+    public static final String DIRECTORY = System.getProperty("user.home") + "/uploads/";
 
     private String uploadFile(MultipartFile file) throws IOException {
         String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
@@ -67,5 +65,10 @@ public class ImageService {
     public void deleteImage(Long imageId) {
         Image image = imageRepository.getReferenceById(imageId);
         imageRepository.delete(image);
+    }
+
+    public Resource getImagePath(String name) throws MalformedURLException {
+        Path imagePath = get(DIRECTORY).toAbsolutePath().normalize().resolve(name);
+        return new UrlResource(imagePath.toUri());
     }
 }
