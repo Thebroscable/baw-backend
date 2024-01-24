@@ -10,6 +10,10 @@ import io.jsonwebtoken.lang.Assert;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -20,9 +24,12 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static java.nio.file.Files.copy;
 import static java.nio.file.Paths.get;
@@ -38,8 +45,14 @@ public class ImageService {
     public static final String DIRECTORY = System.getProperty("user.home") + "/uploads/";
 
     private String uploadFile(MultipartFile file) throws IOException {
-        String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
-        Path fileStorage = get(DIRECTORY, fileName).toAbsolutePath().normalize();
+        String fileName = Objects.requireNonNull(file.getOriginalFilename());
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        String timestamp = dateFormat.format(new Date());
+
+        String uniqueName = StringUtils.cleanPath(timestamp + "_" + fileName);
+
+        Path fileStorage = get(DIRECTORY, uniqueName).toAbsolutePath().normalize();
         copy(file.getInputStream(), fileStorage, REPLACE_EXISTING);
         return fileStorage.toString();
     }
@@ -53,10 +66,10 @@ public class ImageService {
         Image image = Image.builder()
                 .title(imageRequest.getTitle())
                 .description(imageRequest.getDescription())
-                .image_path(uploadFile(imageRequest.getImage()))
-                .user_id(user.get().getId())
-                .sum_likes(0L)
-                .date_time(new Timestamp(new Date().getTime()))
+                .imagePath(uploadFile(imageRequest.getImage()))
+                .userId(user.get().getId())
+                .sumLikes(0L)
+                .dateTime(new Timestamp(new Date().getTime()))
                 .build();
 
         imageRepository.save(image);
@@ -70,5 +83,17 @@ public class ImageService {
     public Resource getImagePath(String name) throws MalformedURLException {
         Path imagePath = get(DIRECTORY).toAbsolutePath().normalize().resolve(name);
         return new UrlResource(imagePath.toUri());
+    }
+
+    public List<String> getImagesNamesOnPage(Integer page) {
+        int pageSize = 5;
+        int pageNumber = page - 1;
+
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("dateTime").descending());
+        Page<Image> images = imageRepository.findAll(pageable);
+
+        return images.stream()
+                .map(Image::getImagePath)
+                .collect(Collectors.toList());
     }
 }

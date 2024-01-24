@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,6 +24,11 @@ import java.nio.file.Path;
 public class ImageController {
 
     private final ImageService imageService;
+
+    @GetMapping("/images-names-page/{page}")
+    public ResponseEntity<List<String>> getImagesNamesOnPage(@PathVariable("page") Integer page) {
+        return ResponseEntity.ok(imageService.getImagesNamesOnPage(page));
+    }
 
     @GetMapping("/storage/{name}")
     public ResponseEntity<Resource> readImage(@PathVariable("name") String name) throws IOException {

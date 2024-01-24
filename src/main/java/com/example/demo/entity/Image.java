@@ -29,14 +29,18 @@ public class Image {
 
     @NotNull
     @Size(max = 255)
-    private String image_path;
+    @Column(name = "image_path")
+    private String imagePath;
 
     @NotNull
-    private Long user_id;
+    @Column(name = "user_id")
+    private Long userId;
 
     @NotNull
-    private Long sum_likes;
+    @Column(name = "sum_likes")
+    private Long sumLikes;
 
     @NotNull
-    private Timestamp date_time;
+    @Column(name = "date_time")
+    private Timestamp dateTime;
 }
