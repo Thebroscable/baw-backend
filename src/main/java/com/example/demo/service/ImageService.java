@@ -54,7 +54,7 @@ public class ImageService {
 
         Path fileStorage = get(DIRECTORY, uniqueName).toAbsolutePath().normalize();
         copy(file.getInputStream(), fileStorage, REPLACE_EXISTING);
-        return fileStorage.toString();
+        return uniqueName;
     }
 
     public void createImage(ImageRequest imageRequest) throws IOException {
@@ -86,7 +86,7 @@ public class ImageService {
     }
 
     public List<String> getImagesNamesOnPage(Integer page) {
-        int pageSize = 5;
+        int pageSize = 20;
         int pageNumber = page - 1;
 
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("dateTime").descending());
