@@ -2,7 +2,6 @@ package com.example.demo.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 
 @Data
@@ -18,8 +17,10 @@ public class Like {
     private Long id;
 
     @NotNull
-    private Long user_id;
+    @Column(name = "user_id")
+    private Long userId;
 
     @NotNull
-    private Long image_id;
+    @Column(name = "image_id")
+    private Long imageId;
 }

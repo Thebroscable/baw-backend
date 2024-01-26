@@ -3,10 +3,13 @@ package com.example.demo.service;
 import com.example.demo.constant.MessageConstant;
 import com.example.demo.dto.ImageRequest;
 import com.example.demo.entity.Image;
+import com.example.demo.entity.Like;
 import com.example.demo.entity.UserAccount;
 import com.example.demo.repository.ImageRepository;
+import com.example.demo.repository.LikesRepository;
 import com.example.demo.repository.UserAccountRepository;
 import io.jsonwebtoken.lang.Assert;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -22,6 +25,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -42,6 +47,7 @@ public class ImageService {
 
     private final ImageRepository imageRepository;
     private final UserAccountRepository userAccountRepository;
+    private final LikesRepository likesRepository;
     public static final String DIRECTORY = System.getProperty("user.home") + "/uploads/";
 
     private String uploadFile(MultipartFile file) throws IOException {
@@ -91,6 +97,65 @@ public class ImageService {
 
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("dateTime").descending());
         Page<Image> images = imageRepository.findAll(pageable);
+
+        return images.stream()
+                .map(Image::getImagePath)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public List<String> getImagesNamesOnPageLiked(Integer page) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Optional<UserAccount> user = userAccountRepository.findByEmail(authentication.getName());
+
+        Assert.isTrue(user.isPresent(), MessageConstant.INVALID_TOKEN_CREDENTIALS);
+
+        Long userId = user.get().getId();
+
+        List<Long> ids = likesRepository.findByUserId(userId).stream()
+                .map(Like::getImageId)
+                .toList();
+
+        int pageSize = 20;
+        int pageNumber = page - 1;
+
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("dateTime").descending());
+        Page<Image> images = imageRepository.findByIdIn(ids, pageable);
+
+        return images.stream()
+                .map(Image::getImagePath)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public List<String> getImagesNamesOnPageProfile(Integer page) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Optional<UserAccount> user = userAccountRepository.findByEmail(authentication.getName());
+
+        Assert.isTrue(user.isPresent(), MessageConstant.INVALID_TOKEN_CREDENTIALS);
+
+        Long userId = user.get().getId();
+
+        int pageSize = 20;
+        int pageNumber = page - 1;
+
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("dateTime").descending());
+        Page<Image> images = imageRepository.findByUserId(userId, pageable);
+
+        return images.stream()
+                .map(Image::getImagePath)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public List<String> getImagesNamesOnPageSearch(Integer page, String title) {
+        int pageSize = 20;
+        int pageNumber = page - 1;
+
+        String decodedTitle = URLDecoder.decode(title, StandardCharsets.UTF_8);
+
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("dateTime").descending());
+        Page<Image> images = imageRepository.findByTitleContainingIgnoreCase(title, pageable);
 
         return images.stream()
                 .map(Image::getImagePath)

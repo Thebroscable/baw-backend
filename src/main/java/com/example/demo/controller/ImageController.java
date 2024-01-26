@@ -22,6 +22,22 @@ public class ImageController {
 
     private final ImageService imageService;
 
+    @GetMapping("/images-names-page/search/{page}/{title}")
+    public ResponseEntity<List<String>> getImagesNamesOnPageProfile(@PathVariable("page") Integer page,
+                                                                    @PathVariable("title") String title) {
+        return ResponseEntity.ok(imageService.getImagesNamesOnPageSearch(page, title));
+    }
+
+    @GetMapping("/images-names-page/profil/{page}")
+    public ResponseEntity<List<String>> getImagesNamesOnPageProfile(@PathVariable("page") Integer page) {
+        return ResponseEntity.ok(imageService.getImagesNamesOnPageProfile(page));
+    }
+
+    @GetMapping("/images-names-page/liked/{page}")
+    public ResponseEntity<List<String>> getImagesNamesOnPageLikes(@PathVariable("page") Integer page) {
+        return ResponseEntity.ok(imageService.getImagesNamesOnPageLiked(page));
+    }
+
     @GetMapping("/images-names-page/{page}")
     public ResponseEntity<List<String>> getImagesNamesOnPage(@PathVariable("page") Integer page) {
         return ResponseEntity.ok(imageService.getImagesNamesOnPage(page));
