@@ -27,7 +27,12 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers("/api/**").permitAll()
+                        .requestMatchers("/api/v1/image/images-names-page/user/**").permitAll()
+                        .requestMatchers("/api/v1/image/image-get-details/**").permitAll()
+                        .requestMatchers("/api/v1/image/images-names-page/search/**").permitAll()
+                        .requestMatchers("/api/v1/image/images-names-page/**").permitAll()
+                        .requestMatchers("/api/v1/image/storage/**").permitAll()
+                        .requestMatchers("/api/v1/auth/**").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)

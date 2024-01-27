@@ -12,6 +12,7 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 @Builder
 @Entity
+@Getter
 @Table(schema = "public", name = "image")
 public class Image {
 
@@ -43,4 +44,9 @@ public class Image {
     @NotNull
     @Column(name = "date_time")
     private Timestamp dateTime;
+
+    public Long updateLikesSum(Integer number) {
+        this.sumLikes += number;
+        return this.sumLikes;
+    }
 }

@@ -1,6 +1,8 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.ImageRequest;
+import com.example.demo.dto.ImageResponse;
+import com.example.demo.entity.Image;
 import com.example.demo.service.ImageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,13 +24,24 @@ public class ImageController {
 
     private final ImageService imageService;
 
+    @GetMapping("/image-get-details/{imageName}")
+    public ResponseEntity<ImageResponse> getImageDetails(@PathVariable("imageName") String imageName) {
+        return ResponseEntity.ok(imageService.getImage(imageName));
+    }
+
+    @GetMapping("/images-names-page/user/{page}/{userEmail}")
+    public ResponseEntity<List<String>> getImagesNamesOnPageUserProfile(@PathVariable("page") Integer page,
+                                                                        @PathVariable("userEmail") String userEmail) {
+        return ResponseEntity.ok(imageService.getImagesNamesOnPageUserProfile(page, userEmail));
+    }
+
     @GetMapping("/images-names-page/search/{page}/{title}")
     public ResponseEntity<List<String>> getImagesNamesOnPageProfile(@PathVariable("page") Integer page,
                                                                     @PathVariable("title") String title) {
         return ResponseEntity.ok(imageService.getImagesNamesOnPageSearch(page, title));
     }
 
-    @GetMapping("/images-names-page/profil/{page}")
+    @GetMapping("/images-names-page/profile/{page}")
     public ResponseEntity<List<String>> getImagesNamesOnPageProfile(@PathVariable("page") Integer page) {
         return ResponseEntity.ok(imageService.getImagesNamesOnPageProfile(page));
     }
@@ -68,9 +81,9 @@ public class ImageController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/{imageId}")
-    public ResponseEntity<Void> deleteImage(@PathVariable Long imageId) {
-        imageService.deleteImage(imageId);
+    @DeleteMapping("/delete/{imageName}")
+    public ResponseEntity<Void> deleteImage(@PathVariable("imageName") String imageName) {
+        imageService.deleteImage(imageName);
         return ResponseEntity.ok().build();
     }
 }

@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import com.example.demo.constant.MessageConstant;
 import com.example.demo.dto.ImageRequest;
+import com.example.demo.dto.ImageResponse;
 import com.example.demo.entity.Image;
 import com.example.demo.entity.Like;
 import com.example.demo.entity.UserAccount;
@@ -52,6 +53,12 @@ public class ImageService {
 
     private String uploadFile(MultipartFile file) throws IOException {
         String fileName = Objects.requireNonNull(file.getOriginalFilename());
+        String[] splitFileName = fileName.split("\\.");
+        Assert.isTrue(
+                Objects.equals(splitFileName[splitFileName.length - 1], "jpg") ||
+                        Objects.equals(splitFileName[splitFileName.length - 1], "jpeg") ||
+                        Objects.equals(splitFileName[splitFileName.length - 1], "png")
+                , MessageConstant.INVALID_IMAGE_FORMAT);
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
         String timestamp = dateFormat.format(new Date());
@@ -81,9 +88,19 @@ public class ImageService {
         imageRepository.save(image);
     }
 
-    public void deleteImage(Long imageId) {
-        Image image = imageRepository.getReferenceById(imageId);
-        imageRepository.delete(image);
+    @Transactional
+    public void deleteImage(String imageName) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Optional<UserAccount> user = userAccountRepository.findByEmail(authentication.getName());
+        Assert.isTrue(user.isPresent(), MessageConstant.INVALID_TOKEN_CREDENTIALS);
+        Long userId = user.get().getId();
+
+        Optional<Image> image = imageRepository.findByImagePath(imageName);
+
+        if(image.isPresent() && Objects.equals(image.get().getUserId(), userId)) {
+            likesRepository.deleteByImageId(image.get().getId());
+            imageRepository.delete(image.get());
+        }
     }
 
     public Resource getImagePath(String name) throws MalformedURLException {
@@ -148,6 +165,24 @@ public class ImageService {
     }
 
     @Transactional
+    public List<String> getImagesNamesOnPageUserProfile(Integer page, String userEmail) {
+        Optional<UserAccount> user = userAccountRepository.findByEmail(userEmail);
+        Assert.isTrue(user.isPresent(), MessageConstant.ITEM_NOT_FOUND);
+
+        Long userId = user.get().getId();
+
+        int pageSize = 20;
+        int pageNumber = page - 1;
+
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("dateTime").descending());
+        Page<Image> images = imageRepository.findByUserId(userId, pageable);
+
+        return images.stream()
+                .map(Image::getImagePath)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
     public List<String> getImagesNamesOnPageSearch(Integer page, String title) {
         int pageSize = 20;
         int pageNumber = page - 1;
@@ -160,5 +195,34 @@ public class ImageService {
         return images.stream()
                 .map(Image::getImagePath)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public ImageResponse getImage(String imagePath) {
+        Optional<Image> image = imageRepository.findByImagePath(imagePath);
+        Assert.isTrue(image.isPresent(), MessageConstant.ITEM_NOT_FOUND);
+
+        Optional<UserAccount> userAccount = userAccountRepository.findById(image.get().getUserId());
+        Assert.isTrue(userAccount.isPresent(), MessageConstant.ITEM_NOT_FOUND);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Optional<UserAccount> user = userAccountRepository.findByEmail(authentication.getName());
+
+        Optional<Like> like = Optional.empty();
+        boolean canDelete = false;
+        if (user.isPresent()) {
+            like = likesRepository.findByUserIdAndImageId(user.get().getId(), image.get().getId());
+            canDelete = (user.get().getId().equals(image.get().getUserId()));
+        }
+
+        return ImageResponse.builder()
+                .title(image.get().getTitle())
+                .description(image.get().getDescription())
+                .username(userAccount.get().getEmail())
+                .sumLikes(image.get().getSumLikes())
+                .dateTime(image.get().getDateTime())
+                .isLiked(like.isPresent())
+                .canDelete(canDelete)
+                .build();
     }
 }
