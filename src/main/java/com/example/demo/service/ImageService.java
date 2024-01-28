@@ -49,7 +49,7 @@ public class ImageService {
     private final ImageRepository imageRepository;
     private final UserAccountRepository userAccountRepository;
     private final LikesRepository likesRepository;
-    public static final String DIRECTORY = System.getProperty("user.home") + "/uploads/";
+    public static final String DIRECTORY = System.getProperty("user.home") + "/Pictures/";
 
     private String uploadFile(MultipartFile file) throws IOException {
         String fileName = Objects.requireNonNull(file.getOriginalFilename());
